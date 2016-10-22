@@ -1,0 +1,1 @@
+A readable, commented Promise implementation based heavily on [this tutorial](https://www.promisejs.org/implementing/). This is neither fully standard compliant nor meant to be used anywhere, its sole purpose is educational.
