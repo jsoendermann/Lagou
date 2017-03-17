@@ -38,6 +38,8 @@
     "rules": {
         "max-len": ["error", 150],
         "strict": 0,
-        "no-underscore-dangle": 0
+        "no-underscore-dangle": 0,
+        "arrow-parens": 0,
+        "brace-style": "off"
     }
 }

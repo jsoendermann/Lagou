@@ -6,6 +6,17 @@ const REJECTED = Symbol('rejected');
 
 
 export default class LagouPromise {
+  state = PENDING;
+
+  // The promised value
+  value = null;
+
+  // If the code that receives this promise signs up to receive the promised value before
+  // it becomes available, we have to save the handlers so that we can call them once
+  // the promise gets fulfilled.
+  handlers = [];
+
+
   // The constructor takes a function which in turn takes up to two functions as parameters,
   // one to fulfill the promise with a value, the other to reject it with a reason.
   // Suppose you have a function sendRequest(url, callback). You can promisify this function
@@ -22,35 +33,21 @@ export default class LagouPromise {
   // };
   // const promise = new Promise(resolver);
   constructor(untrustedResolver) {
-    this.state = PENDING;
-    this.value = null;
-    this.handlers = [];
-
-    this.fulfill = this.fulfill.bind(this);
-    this.reject = this.reject.bind(this);
-    this.handle = this.handle.bind(this);
-
     // This adds safety checks explained in the comments below but is otherwise equivalent to
     // untrustedResolver(this.fulfill, this.reject);
     LagouPromise.doResolve(untrustedResolver, this.fulfill, this.reject);
   }
 
-  fulfill(result) {
+  fulfill = result => {
     try {
-      // Promises can not be fulfilled with another promise so if the resolver calls this method with
-      // a promise (which we identify by checking if it has an attribute named 'then' that's a function'),
-      // we fulfill this promise with the result of the nested promise.
-      let then = null;
-      const t = typeof result;
-      if (result && (t === 'object' || t === 'function')) {
-        const resultThen = result.then;
-        if (typeof thenAttr === 'function') {
-          then = resultThen;
-        }
-      }
-
-      if (then) {
-        LagouPromise.doResolve(then.bind(result), this.fulfill, this.reject);
+      // A promise can not be fulfilled with another promise so if this method gets called with
+      // a promise we resolve the inner promise and fulfill our promise with the result of this resolution.
+      // To decide wether result is a promise, we essentially check if it has a then property that's a function.
+      if (result &&
+        (typeof result === 'object' || typeof result === 'function') &&
+        typeof result.then === 'function')
+      {
+        LagouPromise.doResolve(result::then, this.fulfill, this.reject);
       } else {
         this.state = FULFILLED;
         this.value = result;
@@ -59,8 +56,8 @@ export default class LagouPromise {
         this.handlers.forEach(this.handle);
 
         // These handlers shouldn't be called again and neither should new ones be added because at this point,
-        // the promise has been fulfilled and calling its .then method will cause onFulfilled and onRejected
-        // be called immediately in the next iteration of the event loop.
+        // the promise has been fulfilled and calling its then method will cause onFulfilled and onRejected to
+        // be called immediately.
         this.handlers = null;
       }
     } catch (e) {
@@ -69,18 +66,17 @@ export default class LagouPromise {
     }
   }
 
-  // This is a simpler version of .fulfill
-  reject(error) {
+  reject = error => {
     this.state = REJECTED;
     this.value = error;
     this.handlers.forEach(this.handle);
     this.handlers = null;
   }
 
-  // This is a helper function called by .done and (indirectly) by .then. A handler here is an object
+  // This is a helper function called by done and (indirectly) by then. A handler here is an object
   // with optional onFulfilled and onRejected function attributes that either get called immediately
   // if the promise has already been fulfilled or rejected or the handler gets added to this.handlers.
-  handle(handler) {
+  handle = handler => {
     if (this.state === PENDING) {
       this.handlers.push(handler);
     } else {
@@ -93,7 +89,7 @@ export default class LagouPromise {
     }
   }
 
-  // This is a simple version of .then that does not return another promise. Following the spec,
+  // This is a simple version of then that does not return another promise. Following the spec,
   // this function waits for the next iteration of the event loop to do anything.
   done(onFulfilled, onRejected) {
     setTimeout(() => {
@@ -104,7 +100,7 @@ export default class LagouPromise {
     }, 0);
   }
 
-  // .then is used to register functions (onFulfilled, onRejected) to be executed once the promise gets resolved.
+  // then is used to register functions (onFulfilled, onRejected) to be executed once the promise gets resolved.
   // What makes this function slightly complex is that it returns a new promise which gets resolved with the return
   // value of onFulfilled or onRejected.
   then(onFulfilled, onRejected) {
@@ -112,7 +108,7 @@ export default class LagouPromise {
       this.done((result) => {
         if (typeof onFulfilled === 'function') {
           try {
-            // result is the result of the original promise on which .then was called. We pass this result to
+            // result is the result of the original promise on which then was called. We pass this result to
             // the onFulfilled parameter. The result of this function is then used to resolve the new promise.
             return resolve(onFulfilled(result));
           } catch (ex) {

@@ -32,4 +32,10 @@ describe('Promises', function () {
       expect(value).toEqual(42);
     });
   });
+
+  it('should handle promises being resolved with other promises', function () {
+    const innerPromise = new LagouPromise(resolve => resolve(42));
+    const outerPromise = new LagouPromise(resolve => resolve(innerPromise));
+    outerPromise.then(value => expect(value).toEqual(42));
+  });
 });
