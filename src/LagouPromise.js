@@ -6,14 +6,13 @@ const REJECTED = Symbol('rejected');
 
 
 export default class LagouPromise {
-
   // The constructor takes a function which in turn takes up to two functions as parameters,
-  // one two fulfill the promise with a value, the other to reject it with a reason.
-  // Suppose you have a function makeRequest(url, callback), you can convert it to a promise
+  // one to fulfill the promise with a value, the other to reject it with a reason.
+  // Suppose you have a function sendRequest(url, callback). You can promisify this function
   // like so (note that the resolver is usually passed directly to the Promise constructor
   // instead of being saved in a variable):
   // const resolver = (fulfill, reject) => {
-  //   makeRequest('http://...', (error, result) => {
+  //   sendRequest('http://...', (error, result) => {
   //     if (error) {
   //       reject(error);
   //     } else {
