@@ -2,7 +2,7 @@
 /* eslint prefer-arrow-callback:0, func-names:0 */
 /* eslint no-unused-vars: ["error", { "argsIgnorePattern": "^_" }] */
 
-const LagouPromise = require('../lib/LagouPromise').default;
+const LagouPromise = require('./lib/LagouPromise').default;
 
 describe('Promises', function () {
   it('should resolve', function () {
