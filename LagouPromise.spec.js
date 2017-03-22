@@ -38,4 +38,16 @@ describe('Promises', function () {
     const outerPromise = new LagouPromise(resolve => resolve(innerPromise));
     outerPromise.then(value => expect(value).toEqual(42));
   });
+
+  it('should not allow fulfilling or rejecting twice', function () {
+    let resolver;
+    const promise = new LagouPromise(r => {
+      resolver = r;
+    });
+
+    resolver('foo');
+    resolver('bar');
+
+    promise.then(v => expect(v).toEqual('foo'));
+  });
 });
